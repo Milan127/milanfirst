@@ -11,10 +11,10 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 TIME_ZONE = pytz.timezone('Asia/Kolkata')
 
-# Write credentials.json file from env var (for GitHub Actions)
-if os.getenv("GOOGLE_CREDENTIALS_JSON"):
-    with open("credentials.json", "w") as f:
-        f.write(os.getenv("GCP_CREDS_JSON"))
+def authenticate_gsheet():
+    # Write credentials JSON from GitHub Secret to file
+    with open('credentials.json', 'w') as f:
+        f.write(os.environ['GCP_CREDS_JSON'])
 
 # Load symbols
 fileUrl = 'https://assets.upstox.com/market-quote/instruments/exchange/complete.csv.gz'
