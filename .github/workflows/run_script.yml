@@ -1,0 +1,27 @@
+name: Auto Run Nifty200 Screener
+
+on:
+  schedule:
+    - cron: '50 10 * * *'  # रोज़ 4:20 PM IST (10:50 UTC)
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          pip install pandas requests ta gspread oauth2client openpyxl pytz
+
+      - name: Run Script
+        run: python nifty200_screener.py
+        env:
+          GCP_CREDS_JSON: ${{ secrets.GCP_CREDS_JSON }}
