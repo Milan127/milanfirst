@@ -1,4 +1,4 @@
-name: Run Screener Daily at 3:50 PM IST
+name: Run SST
 
 on:
   schedule:
