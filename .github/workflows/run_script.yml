@@ -2,8 +2,9 @@ name: Auto Run Nifty200 Screener
 
 on:
   schedule:
-    - cron: '52 10 * * *'  # रोज़ 4:20 PM IST (10:50 UTC)
+    - cron: '30 0 * * *'  # रोज़ 6:00 AM IST (12:30 AM UTC)
   workflow_dispatch:
+
 
 jobs:
   build:
