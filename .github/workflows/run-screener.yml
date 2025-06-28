@@ -1,0 +1,31 @@
+name: Run Screener Daily at 3:50 PM IST
+
+on:
+  schedule:
+    - cron: '20 10 * * *'  # 3:50 PM IST = 10:20 UTC
+  workflow_dispatch:
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pandas requests ta gspread oauth2client pytz
+
+      - name: Run the Screener Script
+        env:
+          GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_CREDENTIALS_JSON }}
+        run: |
+          echo "$GOOGLE_CREDENTIALS_JSON" > credentials.json
+          python screener.py
