@@ -1,4 +1,4 @@
-name: Auto Run Nifty200 Screener
+name: SRT RUN
 
 on:
   schedule:
