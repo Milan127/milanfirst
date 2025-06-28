@@ -159,8 +159,9 @@ def main():
     if all_trades:
         final_df = pd.DataFrame(all_trades)
         final_df['Date'] = pd.to_datetime(final_df['Date']).dt.tz_localize(None)
-        final_df['Date'] = final_df['Date'].dt.strftime('%d-%m-%Y')
         final_df.sort_values(by=['Stock', 'Date'], inplace=True)
+        final_df['Date'] = final_df['Date'].dt.strftime('%d-%m-%Y')
+        
 
         update_sheet('SRTbk1', final_df, 'Sheet1', client)
     else:
