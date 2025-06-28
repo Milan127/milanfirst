@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 import ta
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+import os
+import json
 
 # Timezone
 TIME_ZONE = pytz.timezone('Asia/Kolkata')
@@ -125,6 +127,10 @@ if all_trades:
 # else:
 #     print("No trades generated.")
 # Authenticate with Google Sheets
+def authenticate_gsheet():
+    # Write credentials JSON from GitHub Secret to file
+    with open('credentials.json', 'w') as f:
+        f.write(os.environ['GCP_CREDS_JSON'])
 scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
 creds = ServiceAccountCredentials.from_json_keyfile_name(r'credentials.json', scope)
 client = gspread.authorize(creds)
