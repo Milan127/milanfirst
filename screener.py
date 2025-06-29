@@ -248,7 +248,7 @@ def update_sheet(file_name, df, sheet_name):
         # Update cell I1 with the current timestamp in 12-hour format
         try:
             ist = pytz.timezone('Asia/Kolkata')
-            update_timestamp = datetime.now().strftime("Last Update: %d-%m-%Y %I:%M:%S %p")
+            update_timestamp = datetime.now(ist).strftime("Last Update: %d-%m-%Y %I:%M:%S %p")
             worksheet.update('I1', [[update_timestamp]])  # Note the double brackets
             print(f"Updated cell I1 with timestamp '{update_timestamp}'.")
         except gspread.exceptions.APIError as e:
