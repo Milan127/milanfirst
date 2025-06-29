@@ -247,6 +247,7 @@ def update_sheet(file_name, df, sheet_name):
         #     print(f"API Error clearing column H in '{sheet_name}': {e}")
         # Update cell I1 with the current timestamp in 12-hour format
         try:
+            ist = pytz.timezone('Asia/Kolkata')
             update_timestamp = datetime.now().strftime("Last Update: %d-%m-%Y %I:%M:%S %p")
             worksheet.update('I1', [[update_timestamp]])  # Note the double brackets
             print(f"Updated cell I1 with timestamp '{update_timestamp}'.")
