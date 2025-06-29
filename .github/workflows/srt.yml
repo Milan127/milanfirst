@@ -2,7 +2,7 @@ name: SRT RUN
 
 on:
   schedule:
-    - cron: '30 0 * * *'  # रोज़ 6:00 AM IST (12:30 AM UTC)
+     - cron: '20 10 * * *'  # 3:50 PM IST = 10:20 UTC
   workflow_dispatch:
 
 
