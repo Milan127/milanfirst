@@ -2,16 +2,12 @@ import csv
 import datetime
 import yfinance as yf
 import pandas as pd
-import os
 import ta
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from gspread.utils import rowcol_to_a1
-import pytz
+from datetime import datetime as dt
 
-TIME_ZONE = pytz.timezone('Asia/Kolkata')
-
-# --- STEP 1: AUTHENTICATE WITH GOOGLE SHEETS ---
+# --- GOOGLE SHEET AUTH ---
 def authenticate_gsheet():
     with open('credentials.json', 'w') as f:
         f.write(os.environ['GCP_CREDS_JSON'])
@@ -21,31 +17,28 @@ def authenticate_gsheet():
     client = gspread.authorize(creds)
     return client
 
-# --- STEP 2: READ SYMBOLS FROM CSV ---
-def read_stock_symbols(file_path):
-    df = pd.read_csv(file_path)
-    return df['Symbol'].tolist()  # CSV must have a 'Symbol' column
-
-# --- STEP 3: FETCH HISTORICAL DATA USING YFINANCE ---
+# --- YFINANCE DATA FETCH ---
 def get_stock_data(symbol, start_date, end_date):
     stock_data = yf.download(symbol + ".NS", start=start_date, end=end_date)
     return stock_data
 
-# --- STEP 4: CALCULATE INDICATORS ---
-def prepare_indicators(df):
-    df = df.copy()
-    df['LTP'] = df['Close']
-    df['124DMA'] = df['LTP'].rolling(window=124).mean()
+# --- CALCULATE INDICATORS ---
+def get_ltp_and_dma(ticker, start_date, end_date, dma_periods):
+    stock_data = get_stock_data(ticker, start_date, end_date)
+    df = pd.DataFrame(index=stock_data.index)
+    df['LTP'] = stock_data['Close']
+    for period in dma_periods:
+        df[f"{period}DMA"] = df['LTP'].rolling(window=period).mean()
+    df['rsi'] = ta.momentum.RSIIndicator(df['LTP']).rsi()
     df['Ratio'] = df['LTP'] / df['124DMA']
-    df['rsi'] = ta.momentum.RSIIndicator(close=df['LTP'], window=14).rsi()
     return df
 
-# --- STEP 5: STRATEGY LOGIC ---
+# --- STRATEGY EVALUATION ---
 def evaluate_strategy(df, stock_name):
-    trades = []
     buy_price = None
     sell_price = None
     in_observation = False
+    trades = []
 
     for i in range(len(df)):
         date = df.index[i]
@@ -72,69 +65,43 @@ def evaluate_strategy(df, stock_name):
 
     return trades
 
-# --- STEP 6: PUSH TO GOOGLE SHEETS ---
+# --- READ SYMBOLS FROM CSV ---
+def read_stock_symbols_from_csv(file_path):
+    df = pd.read_csv(file_path)
+    return df['Symbol'].tolist()
+
+# --- PUSH TO GOOGLE SHEET ---
 def update_sheet(file_name, df, sheet_name, client):
     try:
         spreadsheet = client.open(file_name)
-
-        try:
-            worksheet = spreadsheet.worksheet(sheet_name)
-        except gspread.exceptions.WorksheetNotFound:
-            print(f"❌ Worksheet '{sheet_name}' not found.")
-            return
-
-        header_row = 2
-        data_start_row = 3
-        num_rows = len(df)
-        num_cols = len(df.columns)
-
-        last_cell = rowcol_to_a1(data_start_row + num_rows - 1, num_cols)
-        clear_range = f"A{data_start_row}:{last_cell[:-1]}{data_start_row + num_rows - 1}"
-
-        worksheet.batch_clear([clear_range])
-        worksheet.update(f'A{header_row}', [df.columns.tolist()])
-        worksheet.update(f'A{data_start_row}', df.values.tolist())
-
+        worksheet = spreadsheet.worksheet(sheet_name)
+        worksheet.clear()
+        worksheet.update([df.columns.tolist()] + df.values.tolist())
         print(f"✅ Google Sheet '{file_name}' updated successfully.")
-
     except Exception as e:
         print(f"❌ Sheet update failed: {e}")
 
-# --- MAIN DRIVER CODE ---
+# --- MAIN DRIVER ---
 def main():
-    start_date = "2024-10-01"
-    end_date = datetime.datetime.today().strftime('%Y-%m-%d')
-    csv_file_path = 'ind_nifty200list.csv'  # Must have a 'Symbol' column
-    file_name = 'SRTbk1yf'
-    sheet_name = 'Sheet1'
-
     client = authenticate_gsheet()
-    stocks = read_stock_symbols(csv_file_path)
+    start_date = "2022-10-01"
+    end_date = dt.today().strftime('%Y-%m-%d')
+    dma_periods = [20, 50, 124, 200]
+    stocks = read_stock_symbols_from_csv('ind_nifty200list.csv')
+
     all_trades = []
 
     for stock in stocks:
-        print(f"🔍 Processing: {stock}")
-        try:
-            df = get_stock_data(stock, start_date, end_date)
-            if df is None or df.empty:
-                continue
-
-            df = prepare_indicators(df)
-            trades = evaluate_strategy(df, stock)
-
-            if trades:
-                all_trades.extend(trades)
-
-        except Exception as e:
-            print(f"⚠️ Error processing {stock}: {e}")
-            continue
+        df = get_ltp_and_dma(stock, start_date, end_date, dma_periods)
+        trades = evaluate_strategy(df, stock)
+        if trades:
+            all_trades.extend(trades)
 
     if all_trades:
         final_df = pd.DataFrame(all_trades)
-        final_df['Date'] = pd.to_datetime(final_df['Date']).dt.tz_localize(None)
+        final_df['Date'] = pd.to_datetime(final_df['Date']).dt.strftime('%d-%m-%Y')
         final_df.sort_values(by=['Stock', 'Date'], inplace=True)
-        final_df['Date'] = final_df['Date'].dt.strftime('%d-%m-%Y')
-        update_sheet(file_name, final_df, sheet_name, client)
+        update_sheet('SRTbk2', final_df, 'Sheet1', client)
     else:
         print("⚠️ No trades generated.")
 
