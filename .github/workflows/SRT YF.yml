@@ -28,4 +28,4 @@ jobs:
           pip install pandas yfinance ta requests
 
       - name: Run Strategy Script
-        run: python nifty200_screenery yfiance.py
+        run: python nifty200_screenery_yfiance.py
