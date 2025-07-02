@@ -26,4 +26,4 @@ jobs:
       - name: Run Strategy Script
         env:
           GCP_CREDS_JSON: ${{ secrets.GCP_CREDS_JSON }}
-        run: python nifty200_strategy_gsheet.py
+        run: python nifty200_screenery_yfiance.py
