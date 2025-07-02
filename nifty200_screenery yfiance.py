@@ -115,7 +115,7 @@ def read_stock_symbols_from_csv(file_path):
 
 # --- MAIN DRIVER ---
 def main():
-    start_date = "2022-10-01"
+    start_date = "2024-10-01"
     end_date = datetime.datetime.today().strftime('%Y-%m-%d')
     dma_periods = [200, 50, 20, 124]
     csv_file_path = 'ind_nifty200list.csv'
