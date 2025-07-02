@@ -71,21 +71,38 @@ def read_stock_symbols_from_csv(file_path):
     df = pd.read_csv(file_path)
     return df['Symbol'].tolist()
 
-# --- PUSH TO GOOGLE SHEET ---
+# --- STEP 6: PUSH TO GOOGLE SHEETS ---
 def update_sheet(file_name, df, sheet_name, client):
     try:
         spreadsheet = client.open(file_name)
-        worksheet = spreadsheet.worksheet(sheet_name)
-        worksheet.clear()
-        worksheet.update([df.columns.tolist()] + df.values.tolist())
+
+        try:
+            worksheet = spreadsheet.worksheet(sheet_name)
+        except gspread.exceptions.WorksheetNotFound:
+            print(f"❌ Worksheet '{sheet_name}' not found.")
+            return
+
+        header_row = 2
+        data_start_row = 3
+        num_rows = len(df)
+        num_cols = len(df.columns)
+
+        last_cell = rowcol_to_a1(data_start_row + num_rows - 1, num_cols)
+        clear_range = f"A{data_start_row}:{last_cell[:-1]}{data_start_row + num_rows - 1}"
+
+        worksheet.batch_clear([clear_range])
+        worksheet.update(f'A{header_row}', [df.columns.tolist()])
+        worksheet.update(f'A{data_start_row}', df.values.tolist())
+
         print(f"✅ Google Sheet '{file_name}' updated successfully.")
+
     except Exception as e:
         print(f"❌ Sheet update failed: {e}")
 
 # --- MAIN DRIVER ---
 def main():
     client = authenticate_gsheet()
-    start_date = "2022-10-01"
+    start_date = "2024-10-01"
     end_date = dt.today().strftime('%Y-%m-%d')
     dma_periods = [20, 50, 124, 200]
     stocks = read_stock_symbols_from_csv('ind_nifty200list.csv')
@@ -102,7 +119,7 @@ def main():
         final_df = pd.DataFrame(all_trades)
         final_df['Date'] = pd.to_datetime(final_df['Date']).dt.strftime('%d-%m-%Y')
         final_df.sort_values(by=['Stock', 'Date'], inplace=True)
-        update_sheet('SRTbk2', final_df, 'Sheet1', client)
+        update_sheet('SRTbk1yf', final_df, 'Sheet1', client)
     else:
         print("⚠️ No trades generated.")
 
