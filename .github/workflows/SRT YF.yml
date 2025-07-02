@@ -1,4 +1,5 @@
-name:SRT YF
+name: SRT YF
+
 on:
   schedule:
     - cron: '20 10 * * *'  # 3:50 PM IST = 10:20 UTC
