@@ -2,30 +2,28 @@ name: SRT YF
 
 on:
   schedule:
-    - cron: '20 10 * * *'  # 3:50 PM IST = 10:20 UTC
-  workflow_dispatch:
+    - cron: '20 10 * * *'  # Runs daily at 3:50 PM IST (10:20 UTC)
+  workflow_dispatch:        # Allows manual run from GitHub UI
 
 jobs:
-  run-strategy:
+  run-script:
     runs-on: ubuntu-latest
 
-    env:
-      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
 
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pandas yfinance ta requests
+          pip install pandas yfinance ta gspread oauth2client pytz
 
       - name: Run Strategy Script
-        run: python nifty200_screenery_yfiance.py
+        env:
+          GCP_CREDS_JSON: ${{ secrets.GCP_CREDS_JSON }}
+        run: python nifty200_strategy_gsheet.py
