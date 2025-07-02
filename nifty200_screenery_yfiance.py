@@ -9,6 +9,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime as dt
 from gspread.utils import rowcol_to_a1
 
+
 # --- GOOGLE SHEET AUTH ---
 def authenticate_gsheet():
     with open('credentials.json', 'w') as f:
@@ -72,7 +73,7 @@ def read_stock_symbols_from_csv(file_path):
     df = pd.read_csv(file_path)
     return df['Symbol'].tolist()
 
-# --- PUSH TO GOOGLE SHEETS ---
+# --- STEP 6: PUSH TO GOOGLE SHEETS ---
 def update_sheet(file_name, df, sheet_name, client):
     try:
         spreadsheet = client.open(file_name)
@@ -83,18 +84,17 @@ def update_sheet(file_name, df, sheet_name, client):
             print(f"❌ Worksheet '{sheet_name}' not found.")
             return
 
-        # Clear old data starting from A3
+        header_row = 2
+        data_start_row = 3
         num_rows = len(df)
         num_cols = len(df.columns)
-        end_cell = rowcol_to_a1(2 + num_rows, num_cols)
-        clear_range = f"A3:{end_cell}"
+
+        last_cell = rowcol_to_a1(data_start_row + num_rows - 1, num_cols)
+        clear_range = f"A{data_start_row}:{last_cell[:-1]}{data_start_row + num_rows - 1}"
+
         worksheet.batch_clear([clear_range])
-
-        # Optional: Update header in Row 2 (keep Row 1 intact)
-        worksheet.update('A2', [df.columns.tolist()])
-
-        # Update data from Row 3
-        worksheet.update('A3', df.values.tolist())
+        worksheet.update(f'A{header_row}', [df.columns.tolist()])
+        worksheet.update(f'A{data_start_row}', df.values.tolist())
 
         print(f"✅ Google Sheet '{file_name}' updated successfully.")
 
