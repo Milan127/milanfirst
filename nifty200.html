@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Nifty 200 Report</title>
+  <title>Nifty 200 </title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -34,7 +34,7 @@
 </head>
 <body>
 
-  <h1>📊 Nifty 200 Report (Live from Google Sheet)</h1>
+  <h1>📊 Nifty 200 Report </h1>
   <a href="index.html">⬅️ Back to Home</a>
   <table id="csvTable"></table>
 
@@ -42,22 +42,32 @@
     const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vR2nLaK--celtuMJSPlPJV1hT5W56vhe7oTjYmy5jPDEI3OCmGIw1Gahsz6Isr2_c8qN0sMbZ4zCtQ-/pub?gid=374636284&single=true&output=csv';
 
     fetch(sheetUrl)
-      .then(res => res.text())
-      .then(csv => {
-        const rows = csv.trim().split('\n');
-        const table = document.getElementById('csvTable');
-        rows.forEach((row, i) => {
-          const cols = row.split(',');
-          const tr = document.createElement('tr');
-          cols.forEach(col => {
-            const cell = document.createElement(i === 0 ? 'th' : 'td');
-            cell.textContent = col;
-            tr.appendChild(cell);
-          });
-          table.appendChild(tr);
-        });
-      });
-  </script>
+    .then(res => res.text())
+    .then(csv => {
+      const rows = csv.trim().split('\n');
+      const table = document.getElementById('csvTable');
 
+      rows.forEach((row, i) => {
+        const cols = row.split(',');
+        const tr = document.createElement('tr');
+
+        cols.forEach((col, j) => {
+          const cell = document.createElement(i === 0 ? 'th' : 'td');
+          cell.textContent = col;
+
+          // 🔹 Highlight "Buy" action with green background
+          if (i !== 0 && cols[2].toLowerCase().includes("buy") && j === 2) {
+            cell.style.backgroundColor = "#d4edda"; // light green
+            cell.style.color = "#155724"; // dark green text
+            cell.style.fontWeight = "bold";
+          }
+
+          tr.appendChild(cell);
+        });
+
+        table.appendChild(tr);
+      });
+    });
+</script>
 </body>
 </html>
