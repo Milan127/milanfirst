@@ -105,7 +105,8 @@ def update_sheet(file_name, df, sheet_name, client):
 def main():
     client = authenticate_gsheet()
     start_date = "2024-10-01"
-    end_date = dt.today().strftime('%Y-%m-%d')
+    end_date = (dt.today() + timedelta(days=1)).strftime('%Y-%m-%d')
+
     dma_periods = [20, 50, 124, 200]
     stocks = read_stock_symbols_from_csv('ind_nifty200list.csv')
 
