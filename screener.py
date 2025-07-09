@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import ta
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
+from datetime import timedelta
 
 
 TIME_ZONE = pytz.timezone('Asia/Kolkata')
@@ -57,7 +58,8 @@ def getHistoricalData(symInfo):
     try:
         parseInstrument = urllib.parse.quote(symInfo.instrument_key)
         fromDate = (datetime.now(TIME_ZONE) - timedelta(days=10000)).strftime("%Y-%m-%d")
-        toDate = datetime.now(TIME_ZONE).strftime("%Y-%m-%d")
+        to_date = (datetime.now(TIME_ZONE) + timedelta(days=1)).strftime("%Y-%m-%d")
+
         url = f'https://api.upstox.com/v2/historical-candle/{parseInstrument}/day/{toDate}/{fromDate}'
         
         res = requests.get(url, headers={'accept': 'application/json'}, params={}, timeout=5.0)
