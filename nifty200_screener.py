@@ -42,7 +42,8 @@ def fetch_historical_candle_data(instrument_key):
     try:
         encoded_key = urllib.parse.quote(instrument_key)
         from_date = "2024-10-01"
-        to_date = datetime.now(TIME_ZONE).strftime("%Y-%m-%d")
+        to_date = (datetime.now(TIME_ZONE) + timedelta(days=1)).strftime("%Y-%m-%d")
+
         url = f'https://api.upstox.com/v2/historical-candle/{encoded_key}/day/{to_date}/{from_date}'
         headers = {'accept': 'application/json'}
         res = requests.get(url, headers=headers, timeout=5.0)
