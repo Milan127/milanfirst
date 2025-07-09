@@ -8,6 +8,7 @@ import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 from datetime import datetime as dt
 from gspread.utils import rowcol_to_a1
+from datetime import timedelta
 
 
 # --- GOOGLE SHEET AUTH ---
