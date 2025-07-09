@@ -57,7 +57,7 @@ nifty_200_df = nifty_200_df.loc[~nifty_200_df.instrument_key.isin(exclude_keys)]
 def getHistoricalData(symInfo):
     try:
         parseInstrument = urllib.parse.quote(symInfo.instrument_key)
-        fromDate = (datetime.now(TIME_ZONE) - timedelta(days=10000)).strftime("%Y-%m-%d")
+        fromDate = (datetime.now(TIME_ZONE) - timedelta(days=1000)).strftime("%Y-%m-%d")
         to_date = (datetime.now(TIME_ZONE) + timedelta(days=1)).strftime("%Y-%m-%d")
 
         url = f'https://api.upstox.com/v2/historical-candle/{parseInstrument}/day/{toDate}/{fromDate}'
