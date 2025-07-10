@@ -58,7 +58,7 @@ def getHistoricalData(symInfo):
     try:
         parseInstrument = urllib.parse.quote(symInfo.instrument_key)
         fromDate = (datetime.now(TIME_ZONE) - timedelta(days=10000)).strftime("%Y-%m-%d")
-        toDate = datetime.now(TIME_ZONE).strftime("%Y-%m-%d")
+        toDate = (datetime.now(TIME_ZONE)+ timedelta(days=1)).strftime("%Y-%m-%d")
 
         url = f'https://api.upstox.com/v2/historical-candle/{parseInstrument}/day/{toDate}/{fromDate}'
 
