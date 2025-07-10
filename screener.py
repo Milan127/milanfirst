@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 import ta
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
-from datetime import timedelta
+
 
 
 TIME_ZONE = pytz.timezone('Asia/Kolkata')
@@ -57,20 +57,20 @@ nifty_200_df = nifty_200_df.loc[~nifty_200_df.instrument_key.isin(exclude_keys)]
 def getHistoricalData(symInfo):
     try:
         parseInstrument = urllib.parse.quote(symInfo.instrument_key)
-        fromDate = (datetime.now(TIME_ZONE) - timedelta(days=1000)).strftime("%Y-%m-%d")
-        to_date = (datetime.now(TIME_ZONE) + timedelta(days=1)).strftime("%Y-%m-%d")
+        fromDate = (datetime.now(TIME_ZONE) - timedelta(days=10000)).strftime("%Y-%m-%d")
+        toDate = datetime.now(TIME_ZONE).strftime("%Y-%m-%d")
 
         url = f'https://api.upstox.com/v2/historical-candle/{parseInstrument}/day/{toDate}/{fromDate}'
-        
+
         res = requests.get(url, headers={'accept': 'application/json'}, params={}, timeout=5.0)
         candleRes = res.json()
-        
+
         if 'data' in candleRes and 'candles' in candleRes['data'] and candleRes['data']['candles']:
             hist = pd.DataFrame(candleRes['data']['candles'])
             hist.columns = ['date', 'Open', 'High', 'Low', 'Close', 'vol', 'oi']
             hist['date'] = pd.to_datetime(hist['date'])
             hist.set_index('date', inplace=True)
-            
+
         hist.sort_values(by="date", ascending=True,inplace=True)    
         # Calculate 52-week high and low
         high_52w = hist['High'].max()
@@ -85,10 +85,10 @@ def getHistoricalData(symInfo):
         # Calculate 20-day low and high
         hist['20d Low'] = hist['Low'].rolling(window=20).min()
         hist['20d High'] = hist['High'].rolling(window=20).max()
-        
+
         # Calculate previous day's 20-day high for each day
         hist['Prev Day 20D High'] = hist['20d High'].shift(1)
-        
+
         # Find the date and price of the 20-day low
         low_touch_dates = hist[hist['Low'] == hist['20d Low']].index
         if not low_touch_dates.empty:
@@ -105,11 +105,11 @@ def getHistoricalData(symInfo):
         if last_20d_low_date:
             subsequent_high_dates = hist[hist.index > last_20d_low_date]
             first_high_touched_dates = subsequent_high_dates[subsequent_high_dates['High'] >= subsequent_high_dates['Prev Day 20D High']]
-            
+
             if not first_high_touched_dates.empty:
                 first_high_touched_date = first_high_touched_dates.index[0]
                 first_high_touched_date_str = first_high_touched_date.strftime('%d-%b-%Y')
-                
+
                 # Get the closing price on the day when the first high was touched
                 first_high_touched_price = hist.loc[first_high_touched_date, 'Close']
                 first_high_touched_prev_day_20d_high_str = f"{hist.loc[first_high_touched_date, 'Prev Day 20D High']:.2f}"
@@ -129,7 +129,7 @@ def getHistoricalData(symInfo):
         if first_high_touched_date_str is None and last_close_price and hist['20d High'].iloc[-1]:
             percent_diff = ((hist['20d High'].iloc[-1] - last_close_price) / last_close_price) * 100
             percent_diff_str = f"{percent_diff:.2f}"
-        
+
         # Calculate P&L %
         pnl_percent_str = None
         if first_high_touched_prev_day_20d_high_str is not None and first_high_touched_price is not None:
@@ -143,7 +143,7 @@ def getHistoricalData(symInfo):
 
         # Calculate daily RSI
         hist['RSI'] = ta.momentum.RSIIndicator(hist['Close']).rsi()
-        
+
         # Calculate weekly RSI
         hist_weekly = hist.resample('W').agg({'Close': 'last'})
         hist_weekly['RSI'] = ta.momentum.RSIIndicator(hist_weekly['Close']).rsi()
@@ -160,12 +160,12 @@ def getHistoricalData(symInfo):
         gtt_update = ""
         if first_high_touched_date_str is not None:
             gtt_update = "TRIGGERED"
-         
+
         elif hist['Prev Day 20D High'].iloc[-1] != hist['20d High'].iloc[-1]:
             gtt_update = "YES"
         elif datetime.today().date() == last_20d_low_date.date():
             gtt_update = "NEW ADD"
-            
+
         return {
             'Stock': symInfo.tradingsymbol	,
             '20D LOW DATE': last_20d_low_date_str,
@@ -183,8 +183,8 @@ def getHistoricalData(symInfo):
             'WEEKLY RSI': last_weekly_rsi_str,  # Add Weekly RSI column
             'MONTHLY RSI': last_monthly_rsi_str  # Add Monthly RSI column
         }
-                
-        
+
+
     except Exception as e:
         print(f'Error in data fetch for {symInfo.instrument_key}: {e}')
         return None
