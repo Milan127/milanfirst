@@ -264,6 +264,6 @@ def update_sheet(file_name, df, sheet_name):
 
 
 if __name__ == "__main__":
-    update_sheet("SST WITH RSI AND RS  BY MILAN YFINACE", process_data(nifty_50_df), "SST-N50")
-    update_sheet("SST WITH RSI AND RS  BY MILAN YFINACE", process_data(nifty_100_df), "SST-N100")
-    update_sheet("SST WITH RSI AND RS  BY MILAN YFINACE", process_data(nifty_200_df), "SST-N200")
+    update_sheet("SST WITH RSI AND RS  BY MILAN upstock", process_data(nifty_50_df), "SST-N50")
+    update_sheet("SST WITH RSI AND RS  BY MILAN upstock", process_data(nifty_100_df), "SST-N100")
+    update_sheet("SST WITH RSI AND RS  BY MILAN upstock", process_data(nifty_200_df), "SST-N200")
