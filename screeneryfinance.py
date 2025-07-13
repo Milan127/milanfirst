@@ -134,9 +134,13 @@ def update_sheet(file_name, df, sheet_name):
 
         worksheet.update(range_name=f'A{start_row}', values=df.values.tolist())
 
-        update_timestamp = datetime.now().strftime("Last Update: %d-%m-%Y %I:%M:%S %p")
-        worksheet.update('I1', [[update_timestamp]])
-        print(f"Updated '{sheet_name}' successfully.")
+        try:
+            ist = pytz.timezone('Asia/Kolkata')
+            update_timestamp = datetime.now(ist).strftime("Last Update: %d-%m-%Y %I:%M:%S %p")
+            worksheet.update('A1', [[update_timestamp]])  # Note the double brackets
+            print(f"Updated cell I1 with timestamp '{update_timestamp}'.")
+        except gspread.exceptions.APIError as e:
+            print(f"API Error updating cell I1 in '{sheet_name}': {e}")
 
     except Exception as e:
         print(f"Failed to update '{sheet_name}': {e}")
