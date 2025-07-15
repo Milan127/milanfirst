@@ -61,10 +61,9 @@ def process_stocks(stocks):
                     trigger_date = df_after_low.iloc[0]['Date']
                     gtt_trigger_price = df_after_low.iloc[0]['Prev_20D_High']
 
-            pnl_percent = None
-            if trigger_date:
-                trigger_close = df[df['Date'] == trigger_date]['Close'].values[0]
-                pnl_percent = ((today_close - trigger_close) / trigger_close) * 100
+            if trigger_date and gtt_trigger_price:
+                pnl_percent = ((today_close - gtt_trigger_price) / gtt_trigger_price) * 100
+
 
             percent_diff = None
             if not trigger_date and new_gtt and today_close:
