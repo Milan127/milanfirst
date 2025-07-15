@@ -5,7 +5,6 @@ from datetime import datetime, timedelta
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import pytz
-import ta
 
 # --- STEP 1: AUTHENTICATE WITH GOOGLE SHEETS ---
 def authenticate_gsheet():
@@ -61,9 +60,12 @@ def process_stocks(stocks):
                     trigger_date = df_after_low.iloc[0]['Date']
                     gtt_trigger_price = df_after_low.iloc[0]['Prev_20D_High']
 
+            # -- Updated logic: Use trigger price for P&L calculation --
+            pnl_percent = None
             if trigger_date and gtt_trigger_price:
                 pnl_percent = ((today_close - gtt_trigger_price) / gtt_trigger_price) * 100
-
+            else:
+                pnl_percent = None  # Do not calculate P&L if trigger didn't happen
 
             percent_diff = None
             if not trigger_date and new_gtt and today_close:
@@ -95,10 +97,6 @@ def process_stocks(stocks):
                 'TRIGGER DATE': trigger_date_str,
                 'GTT TRIGGER PRICE': f"{gtt_trigger_price:.2f}" if gtt_trigger_price else None,
                 'P&L %': f"{pnl_percent:.2f}" if pnl_percent is not None else None
-                # '52W HIGH': f"{high_52w:.2f}" if pd.notnull(high_52w) else None,
-                # '52W HIGH DATE': pd.to_datetime(high_52w_date).strftime('%d-%b-%Y') if pd.notnull(high_52w_date) else None,
-                # '52W LOW': f"{low_52w:.2f}" if pd.notnull(low_52w) else None,
-                # '52W LOW DATE': pd.to_datetime(low_52w_date).strftime('%d-%b-%Y') if pd.notnull(low_52w_date) else None
             })
 
         except Exception as e:
@@ -136,14 +134,14 @@ def update_sheet(file_name, df, sheet_name):
         try:
             ist = pytz.timezone('Asia/Kolkata')
             update_timestamp = datetime.now(ist).strftime("Last Update: %d-%m-%Y %I:%M:%S %p")
-            worksheet.update('A1', [[update_timestamp]])  # Note the double brackets
-            print(f"Updated cell I1 with timestamp '{update_timestamp}'.")
+            worksheet.update('A1', [[update_timestamp]])
+            print(f"Updated cell A1 with timestamp '{update_timestamp}'.")
         except gspread.exceptions.APIError as e:
-            print(f"API Error updating cell I1 in '{sheet_name}': {e}")
-
+            print(f"API Error updating cell A1 in '{sheet_name}': {e}")
     except Exception as e:
         print(f"Failed to update '{sheet_name}': {e}")
 
+# --- STEP 5: FINAL RUN ---
 df_nifty50 = process_stocks(nifty50)
 df_nifty100 = process_stocks(nifty100)
 df_nifty200 = process_stocks(nifty200)
