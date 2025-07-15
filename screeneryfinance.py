@@ -5,8 +5,10 @@ from datetime import datetime, timedelta
 import gspread
 from oauth2client.service_account import ServiceAccountCredentials
 import pytz
+import ta
 
-# --- STEP 1: AUTHENTICATE WITH GOOGLE SHEETS ---
+#RSI AND ADX VERSION
+
 def authenticate_gsheet():
     with open('credentials.json', 'w') as f:
         f.write(os.environ['GCP_CREDS_JSON'])
@@ -16,7 +18,6 @@ def authenticate_gsheet():
     client = gspread.authorize(creds)
     return client
 
-# --- STEP 2: PROCESS STOCKS ---
 def process_stocks(stocks):
     end_date = datetime.today()
     start_date = end_date - timedelta(days=5 * 365)
@@ -33,6 +34,15 @@ def process_stocks(stocks):
             df['20D_Low'] = df['Low'].rolling(window=20).min()
             df['20D_High'] = df['High'].rolling(window=20).max()
             df['Prev_20D_High'] = df['20D_High'].shift(1)
+
+            # RSI Daily
+            df['RSI_D'] = ta.momentum.RSIIndicator(df['Close'], window=14).rsi()
+            rsi_d = df['RSI_D'].iloc[-1]
+
+            # ADX Daily
+            adx_indicator = ta.trend.ADXIndicator(high=df['High'], low=df['Low'], close=df['Close'], window=14)
+            df['ADX_D'] = adx_indicator.adx()
+            adx_d = df['ADX_D'].iloc[-1]
 
             today = df['Date'].iloc[-1]
             today_close = df['Close'].iloc[-1]
@@ -60,12 +70,9 @@ def process_stocks(stocks):
                     trigger_date = df_after_low.iloc[0]['Date']
                     gtt_trigger_price = df_after_low.iloc[0]['Prev_20D_High']
 
-            # -- Updated logic: Use trigger price for P&L calculation --
             pnl_percent = None
             if trigger_date and gtt_trigger_price:
                 pnl_percent = ((today_close - gtt_trigger_price) / gtt_trigger_price) * 100
-            else:
-                pnl_percent = None  # Do not calculate P&L if trigger didn't happen
 
             percent_diff = None
             if not trigger_date and new_gtt and today_close:
@@ -96,7 +103,9 @@ def process_stocks(stocks):
                 'BOH ELIGIBLE': boh_eligible,
                 'TRIGGER DATE': trigger_date_str,
                 'GTT TRIGGER PRICE': f"{gtt_trigger_price:.2f}" if gtt_trigger_price else None,
-                'P&L %': f"{pnl_percent:.2f}" if pnl_percent is not None else None
+                'P&L %': f"{pnl_percent:.2f}" if pnl_percent is not None else None,
+                'RSI D': f"{rsi_d:.2f}" if pd.notnull(rsi_d) else None,
+                'ADX D': f"{adx_d:.2f}" if pd.notnull(adx_d) else None
             })
 
         except Exception as e:
@@ -104,7 +113,6 @@ def process_stocks(stocks):
 
     return pd.DataFrame(final_data)
 
-# --- STEP 3: LOAD STOCK LISTS ---
 nifty50 = pd.read_csv("ind_nifty50list.csv")['Symbol'].str.upper().tolist()
 nifty100 = pd.read_csv("ind_niftynext50list.csv")['Symbol'].str.upper().tolist()
 nifty200 = pd.read_csv("ind_nifty200list.csv")['Symbol'].str.upper().tolist()
@@ -116,7 +124,6 @@ nifty50 = [s + ".NS" for s in nifty50]
 nifty100 = [s + ".NS" for s in nifty100]
 nifty200 = [s + ".NS" for s in nifty200]
 
-# --- STEP 4: PROCESS AND UPLOAD ---
 client = authenticate_gsheet()
 
 def update_sheet(file_name, df, sheet_name):
@@ -126,7 +133,7 @@ def update_sheet(file_name, df, sheet_name):
 
         start_row = 4
         end_row = len(df) + start_row - 1
-        clear_range = f'A{start_row}:P{end_row}'
+        clear_range = f'A{start_row}:Z{end_row}'
         worksheet.batch_clear([clear_range])
 
         worksheet.update(range_name=f'A{start_row}', values=df.values.tolist())
@@ -138,10 +145,10 @@ def update_sheet(file_name, df, sheet_name):
             print(f"Updated cell A1 with timestamp '{update_timestamp}'.")
         except gspread.exceptions.APIError as e:
             print(f"API Error updating cell A1 in '{sheet_name}': {e}")
+
     except Exception as e:
         print(f"Failed to update '{sheet_name}': {e}")
 
-# --- STEP 5: FINAL RUN ---
 df_nifty50 = process_stocks(nifty50)
 df_nifty100 = process_stocks(nifty100)
 df_nifty200 = process_stocks(nifty200)
