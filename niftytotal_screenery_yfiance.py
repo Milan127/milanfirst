@@ -109,7 +109,7 @@ def main():
     end_date = (dt.today() + timedelta(days=1)).strftime('%Y-%m-%d')
 
     dma_periods = [20, 50, 124, 200]
-    stocks = read_stock_symbols_from_csv('ind_niftytotalmarket_list.csv')
+    stocks = read_stock_symbols_from_csv('sec_bhavdata_full_07072025.csv')
 
     all_trades = []
 
