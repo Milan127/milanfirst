@@ -7,8 +7,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 import pytz
 import ta
 
-#RSI AND ADX VERSION
-
+# Authenticate Google Sheets
 def authenticate_gsheet():
     with open('credentials.json', 'w') as f:
         f.write(os.environ['GCP_CREDS_JSON'])
@@ -18,6 +17,7 @@ def authenticate_gsheet():
     client = gspread.authorize(creds)
     return client
 
+# Process stock data
 def process_stocks(stocks):
     end_date = datetime.today()
     start_date = end_date - timedelta(days=5 * 365)
@@ -46,6 +46,9 @@ def process_stocks(stocks):
 
             today = df['Date'].iloc[-1]
             today_close = df['Close'].iloc[-1]
+            prev_close = df['Close'].iloc[-2] if len(df) >= 2 else None
+            today_change = ((today_close - prev_close) / prev_close) * 100 if prev_close else None
+
             old_gtt = df['Prev_20D_High'].iloc[-1]
             new_gtt = df['20D_High'].iloc[-1]
 
@@ -98,6 +101,7 @@ def process_stocks(stocks):
                 'OLD GTT': f"{old_gtt:.2f}" if pd.notnull(old_gtt) else None,
                 'NEW GTT': f"{new_gtt:.2f}" if pd.notnull(new_gtt) else None,
                 'CLOSE': f"{today_close:.2f}" if pd.notnull(today_close) else None,
+                'TODAY CHANGE': f"{today_change:.2f}" if today_change is not None else None,
                 '% DIFF': f"{percent_diff:.2f}" if percent_diff is not None else None,
                 'GTT UPDATE': gtt_update,
                 'BOH ELIGIBLE': boh_eligible,
@@ -113,6 +117,7 @@ def process_stocks(stocks):
 
     return pd.DataFrame(final_data)
 
+# Read symbol lists
 nifty50 = pd.read_csv("ind_nifty50list.csv")['Symbol'].str.upper().tolist()
 nifty100 = pd.read_csv("ind_niftynext50list.csv")['Symbol'].str.upper().tolist()
 nifty200 = pd.read_csv("ind_nifty200list.csv")['Symbol'].str.upper().tolist()
@@ -126,6 +131,7 @@ nifty200 = [s + ".NS" for s in nifty200]
 
 client = authenticate_gsheet()
 
+# Update Google Sheet
 def update_sheet(file_name, df, sheet_name):
     try:
         spreadsheet = client.open(file_name)
@@ -149,6 +155,7 @@ def update_sheet(file_name, df, sheet_name):
     except Exception as e:
         print(f"Failed to update '{sheet_name}': {e}")
 
+# Run process
 df_nifty50 = process_stocks(nifty50)
 df_nifty100 = process_stocks(nifty100)
 df_nifty200 = process_stocks(nifty200)
