@@ -23,7 +23,7 @@ def authenticate_gsheet():
 
 # --- YFINANCE DATA FETCH ---
 def get_stock_data(symbol, start_date, end_date):
-    stock_data = yf.download(symbol + ".NS", start=start_date, end=end_date)
+    stock_data = yf.download(symbol + ".NS", start=start_date, end=end_date,progress=True, auto_adjust=True)
     return stock_data
 
 # --- CALCULATE INDICATORS ---
