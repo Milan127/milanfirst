@@ -2,7 +2,8 @@ name: SRT YF total
 
 on:
   schedule:
-    - cron: '30 10 * * *'  # Runs daily at 4:00 PM IST
+    - cron: '30 9 * * *'   # रोज़ाना 3:00 PM IST पर रन होगा
+
   workflow_dispatch:        # Allows manual run from GitHub UI
 
 jobs:
