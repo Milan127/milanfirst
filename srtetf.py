@@ -126,7 +126,7 @@ def evaluate_strategy(df, stock_name, underlying):
             })
             in_observation = False
 
-        if buy_price and (ratio > 1.30 or rsi > 70 or ltp < 0.75 * buy_price):
+        if buy_price and (ratio > 1.30 or rsi > 75 or ltp < 0.75 * buy_price):
 
             trades.append({
                 "Stock": stock_name,
