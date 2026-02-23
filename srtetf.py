@@ -110,10 +110,10 @@ def evaluate_strategy(df, stock_name, underlying):
         ratio = row['Ratio']
         ltp = row['LTP']
 
-        if not in_observation and rsi < 30 and ratio < 0.90:
+        if not in_observation and rsi < 35 and ratio < 0.95:
             in_observation = True
 
-        elif in_observation and rsi > 30 and buy_price is None:
+        elif in_observation and rsi > 35 and buy_price is None:
             buy_price = ltp
             trades.append({
                 "Stock": stock_name,
