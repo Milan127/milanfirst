@@ -36,7 +36,7 @@ def load_symbols():
     symboldf = pd.read_csv(symbol_url)
     symboldf = symboldf[symboldf.exchange == 'NSE_EQ']
 
-    mw_df = pd.read_csv('MW-ETF-21-Feb-2026.csv')
+    mw_df = pd.read_csv('ETF.csv')
     mw_df.columns = mw_df.columns.str.strip()
 
     symbol_list = mw_df['SYMBOL'].str.strip().tolist()
